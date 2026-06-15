@@ -159,3 +159,7 @@ world := mpi.NewComm(true)
 world.GetRank()
 world.GetSize()
 ```
+
+## Referências
+
+- [Manual do LAD — Laboratório de Alto Desempenho (PUCRS)](https://lad-pucrs.github.io/docs/)

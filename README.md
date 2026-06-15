@@ -1,6 +1,17 @@
 # Go + MPI no Cluster Atlântica
 
-Programa de teste para verificar o funcionamento de **Go com MPI** no cluster Atlântica (PUCRS).
+Exemplos de programas em **Go** usando **MPI** para o cluster Atlântica (PUCRS).
+
+## Exemplos
+
+| # | Diretório | Conceito |
+|---|-----------|----------|
+| 01 | `01-hello` | Inicialização MPI, rank e size |
+| 02 | `02-ping-pong` | Comunicação ponto-a-ponto (Send/Recv) |
+| 03 | `03-ring` | Topologia em anel, roteamento por rank |
+| 04 | `04-scatter-gather` | Distribuição e coleta de dados |
+| 05 | `05-reduce-pi` | Redução (estimativa de Pi por Monte Carlo) |
+| 06 | `06-workpool` | Distribuição dinâmica de tarefas |
 
 ## Pré-requisitos
 
@@ -36,72 +47,46 @@ export PKG_CONFIG_PATH=/LADAPPs/OpenMPI/openmpi-4.1.1/lib/pkgconfig
 
 ### 3. Compilar
 
-```bash
-make build
-```
-
-Ou diretamente:
+Compilar todos os exemplos:
 
 ```bash
-go mod tidy
-go build -o teste-mpi
+make
 ```
 
-Se a compilação não produzir saída, funcionou.
+Compilar um exemplo específico:
+
+```bash
+go build -o bin/01-hello ./01-hello
+```
+
+Os binários são gerados na pasta `bin/`.
 
 ### 4. Alocar recursos no SLURM
 
-Antes de executar, é necessário reservar recursos no cluster.
-
-**Um nó, 4 processos:**
+Antes de executar, reserve recursos no cluster:
 
 ```bash
 salloc -N 1 -n 4
 ```
 
-**Dois nós, 8 processos:**
+Para exemplos que precisam de mais nós:
 
 ```bash
 salloc -N 2 -n 8
 ```
 
-A saída será parecida com:
-
-```text
-salloc: Granted job allocation 32806
-```
-
 ### 5. Executar
 
-Com a alocação ativa, execute o programa com `mpirun`:
+Com a alocação ativa, execute o exemplo desejado:
 
 ```bash
-mpirun -np 4 ./teste-mpi
+mpirun -np 4 ./bin/01-hello
+mpirun -np 2 ./bin/02-ping-pong
+mpirun -np 4 ./bin/03-ring
+mpirun -np 4 ./bin/04-scatter-gather
+mpirun -np 4 ./bin/05-reduce-pi
+mpirun -np 4 ./bin/06-workpool
 ```
-
-Saída esperada (1 nó, 4 processos):
-
-```text
-host=atlantica01 pid=12345 rank=0 size=4
-host=atlantica01 pid=12346 rank=1 size=4
-host=atlantica01 pid=12347 rank=2 size=4
-host=atlantica01 pid=12348 rank=3 size=4
-```
-
-Saída esperada (2 nós, 8 processos):
-
-```text
-host=atlantica01 pid=12345 rank=0 size=8
-host=atlantica01 pid=12346 rank=1 size=8
-host=atlantica01 pid=12347 rank=2 size=8
-host=atlantica01 pid=12348 rank=3 size=8
-host=atlantica03 pid=22345 rank=4 size=8
-host=atlantica03 pid=22346 rank=5 size=8
-host=atlantica03 pid=22347 rank=6 size=8
-host=atlantica03 pid=22348 rank=7 size=8
-```
-
-A ordem das linhas pode variar — isso é normal em programas paralelos.
 
 ### 6. Liberar a alocação
 
@@ -111,27 +96,37 @@ Ao terminar, saia do shell alocado:
 exit
 ```
 
-A mensagem esperada é:
-
-```text
-salloc: Relinquishing job allocation 32806
-```
-
 Para verificar se há alocações ativas:
 
 ```bash
 squeue -u $USER
 ```
 
-## Sobre o programa
+## Descrição dos exemplos
 
-O `main.go` é um programa mínimo que:
+### 01-hello
 
-1. Inicializa o ambiente MPI
-2. Imprime o hostname, PID, rank e tamanho do comunicador
-3. Finaliza o MPI
+Programa mínimo: cada processo imprime seu hostname, PID, rank e o tamanho total do comunicador. Sem comunicação entre processos.
 
-Cada execução com `mpirun -np N` inicia **N processos independentes** do mesmo binário. Cada processo recebe um identificador único chamado **rank** (de 0 a N-1).
+### 02-ping-pong
+
+Rank 0 envia uma sequência de valores para rank 1, que responde com o dobro. Demonstra **Send/Recv** bloqueante entre dois processos.
+
+### 03-ring
+
+Cada processo recebe um token do anterior e envia para o próximo, formando um anel. O token acumula a soma dos ranks. Demonstra **roteamento baseado em rank** e topologia lógica.
+
+### 04-scatter-gather
+
+Rank 0 divide um array em partes iguais e distribui para todos os processos (scatter manual). Cada um calcula a soma local e devolve o resultado para rank 0 (gather manual). Demonstra o **padrão de distribuição e coleta de dados**.
+
+### 05-reduce-pi
+
+Cada processo gera pontos aleatórios para estimar Pi pelo método de Monte Carlo. Os resultados parciais são enviados para rank 0, que calcula a estimativa final (reduce manual). Demonstra **paralelismo embaraçosamente paralelo** e redução.
+
+### 06-workpool
+
+Rank 0 atua como coordenador, distribuindo tarefas sob demanda para os demais processos. Quando um trabalhador termina, recebe a próxima tarefa disponível. Demonstra **balanceamento dinâmico de carga** (work pool pattern).
 
 ## Erros comuns
 
@@ -145,11 +140,11 @@ Ou execute `source setup.sh`.
 
 ### `not enough slots available`
 
-Isso significa que o MPI tentou iniciar mais processos do que os recursos alocados. Certifique-se de que o número em `-np` corresponde ao `-n` usado no `salloc`.
+Certifique-se de que o número em `-np` corresponde ao `-n` usado no `salloc`.
 
 ### Métodos não encontrados (`undefined: mpi.Start`, etc.)
 
-Certifique-se de usar a API correta do pacote `github.com/mnlphlp/gompi`:
+Use a API correta do pacote `github.com/mnlphlp/gompi`:
 
 ```go
 mpi.Init()

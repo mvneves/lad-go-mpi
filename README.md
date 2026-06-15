@@ -11,7 +11,7 @@ O cluster já possui o ambiente necessário:
 | Go | 1.23.2 | `/LADAPPs/Go/go-1.23.2/bin/go` |
 | OpenMPI | 4.1.1 | `/LADAPPs/OpenMPI/openmpi-4.1.1/` |
 
-## Início rápido
+## Passo a passo
 
 ### 1. Clonar o repositório
 
@@ -28,6 +28,12 @@ source setup.sh
 
 Este script configura o `PKG_CONFIG_PATH` e verifica se Go e OpenMPI estão acessíveis.
 
+Se preferir configurar manualmente:
+
+```bash
+export PKG_CONFIG_PATH=/LADAPPs/OpenMPI/openmpi-4.1.1/lib/pkgconfig
+```
+
 ### 3. Compilar
 
 ```bash
@@ -37,24 +43,43 @@ make build
 Ou diretamente:
 
 ```bash
+go mod tidy
 go build -o teste-mpi
 ```
 
-### 4. Executar (teste rápido)
+Se a compilação não produzir saída, funcionou.
 
-Para um teste rápido sem alocação SLURM:
+### 4. Alocar recursos no SLURM
 
-```bash
-make run
-```
+Antes de executar, é necessário reservar recursos no cluster.
 
-Ou:
+**Um nó, 4 processos:**
 
 ```bash
-mpirun --oversubscribe -np 4 ./teste-mpi
+salloc -N 1 -n 4
 ```
 
-Saída esperada:
+**Dois nós, 8 processos:**
+
+```bash
+salloc -N 2 -n 8
+```
+
+A saída será parecida com:
+
+```text
+salloc: Granted job allocation 32806
+```
+
+### 5. Executar
+
+Com a alocação ativa, execute o programa com `mpirun`:
+
+```bash
+mpirun -np 4 ./teste-mpi
+```
+
+Saída esperada (1 nó, 4 processos):
 
 ```text
 host=atlantica01 pid=12345 rank=0 size=4
@@ -63,35 +88,36 @@ host=atlantica01 pid=12347 rank=2 size=4
 host=atlantica01 pid=12348 rank=3 size=4
 ```
 
+Saída esperada (2 nós, 8 processos):
+
+```text
+host=atlantica01 pid=12345 rank=0 size=8
+host=atlantica01 pid=12346 rank=1 size=8
+host=atlantica01 pid=12347 rank=2 size=8
+host=atlantica01 pid=12348 rank=3 size=8
+host=atlantica03 pid=22345 rank=4 size=8
+host=atlantica03 pid=22346 rank=5 size=8
+host=atlantica03 pid=22347 rank=6 size=8
+host=atlantica03 pid=22348 rank=7 size=8
+```
+
 A ordem das linhas pode variar — isso é normal em programas paralelos.
 
-### 5. Executar com SLURM (modo correto)
+### 6. Liberar a alocação
 
-Solicite uma alocação e execute:
+Ao terminar, saia do shell alocado:
 
 ```bash
-salloc -N 1 -n 4
-mpirun -np 4 ./teste-mpi
 exit
 ```
 
-Para usar mais nós:
+A mensagem esperada é:
 
-```bash
-salloc -N 2 -n 8
-mpirun -np 8 ./teste-mpi
-exit
+```text
+salloc: Relinquishing job allocation 32806
 ```
 
-Ou via Makefile:
-
-```bash
-make run-slurm NP=8 NODES=2
-```
-
-### 6. Liberar alocação
-
-Ao terminar, saia do shell alocado com `exit` ou `Ctrl+D`. Para verificar se há jobs ativos:
+Para verificar se há alocações ativas:
 
 ```bash
 squeue -u $USER
@@ -119,7 +145,7 @@ Ou execute `source setup.sh`.
 
 ### `not enough slots available`
 
-Use `--oversubscribe` para testes rápidos, ou aloque recursos com `salloc` antes de executar.
+Isso significa que o MPI tentou iniciar mais processos do que os recursos alocados. Certifique-se de que o número em `-np` corresponde ao `-n` usado no `salloc`.
 
 ### Métodos não encontrados (`undefined: mpi.Start`, etc.)
 
@@ -132,15 +158,4 @@ defer mpi.Finalize()
 world := mpi.NewComm(true)
 world.GetRank()
 world.GetSize()
-```
-
-## Referência rápida
-
-```bash
-source setup.sh              # configurar ambiente
-make build                   # compilar
-make run                     # executar local (4 processos)
-make run NP=8               # executar local (8 processos)
-make run-slurm NP=4 NODES=1 # executar via SLURM
-make clean                   # remover binário
 ```

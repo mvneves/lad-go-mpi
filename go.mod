@@ -1,4 +1,4 @@
-module github.com/pucrs-fppd/go-mpi-cluster
+module github.com/mvneves/lad-go-mpi
 
 go 1.23.2
 

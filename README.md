@@ -16,8 +16,8 @@ O cluster já possui o ambiente necessário:
 ### 1. Clonar o repositório
 
 ```bash
-git clone https://github.com/pucrs-fppd/go-mpi-cluster.git
-cd go-mpi-cluster
+git clone https://github.com/mvneves/lad-go-mpi.git
+cd lad-go-mpi
 ```
 
 ### 2. Configurar o ambiente

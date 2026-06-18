@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	mpi "github.com/mnlphlp/gompi"
+	mpi "github.com/mvneves/gompi"
 )
 
 func main() {

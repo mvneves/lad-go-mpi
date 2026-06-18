@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 
-	mpi "github.com/mnlphlp/gompi"
+	mpi "github.com/mvneves/gompi"
 )
 
 func main() {

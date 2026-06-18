@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	mpi "github.com/mnlphlp/gompi"
-	"github.com/mnlphlp/gompi/comm"
+	mpi "github.com/mvneves/gompi"
+	"github.com/mvneves/gompi/comm"
 )
 
 const (

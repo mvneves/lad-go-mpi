@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	mpi "github.com/mnlphlp/gompi"
+	mpi "github.com/mvneves/gompi"
 )
 
 func main() {

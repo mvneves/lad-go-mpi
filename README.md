@@ -144,7 +144,7 @@ Certifique-se de que o número em `-np` corresponde ao `-n` usado no `salloc`.
 
 ### Métodos não encontrados (`undefined: mpi.Start`, etc.)
 
-Use a API correta do pacote `github.com/mnlphlp/gompi`:
+Use a API correta do pacote `github.com/mvneves/gompi`:
 
 ```go
 mpi.Init()
